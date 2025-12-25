@@ -1,0 +1,46 @@
+ERC3 Agent Architecture:
+Single-agent OODA loop (Observe -> Orient -> Decide -> Act)
+Runs on Cerebras inference (qwen/qwen3-235b-a22b-2507) via OpenRouter.
+
+Core mechanism: Structured Outputs using Pydantic schema NextStep.
+The model must emit one structured step per iteration.
+
+NEXTSTEP SCHEMA
+think   — concise reasoning (1–2 sentences)
+scratch — working notes (last 500 chars kept)
+memory  — confirmed facts / IDs (compressed string)
+function— typed ERC3 tool call
+
+OODA LOOP
+Observe:
+- who_am_i(), TaskInfo
+
+Orient:
+- build_system_prompt
+- search rules
+- context assembly (memory, scratch, IDs)
+
+Decide:
+- LLM call via
+client.beta.chat.completions.parse(response_format=NextStep)
+
+Act:
+- api.dispatch(fn)
+- error classification
+- memory / scratch update
+- loop tracking
+Ends on Req_ProvideAgentResponse, done=true, or MAX_STEPS.
+
+GUARDRAILS
+- Pre-gen: guest denial, regex deny-list, vague fast-path blocking  
+- Anti-hallucination: heuristic fake-ID blocking  
+- Action verification: blocks ok_answer if mutation missing
+
+RUNTIME
+- Parallelism: ThreadPoolExecutor (5 workers)  
+- Rate limit: fixed minimum interval (no token bucket)  
+- Model: qwen/qwen3-235b-a22b-2507  
+- Provider: OpenRouter (Cerebras)
+
+REPO
+https://github.com/ai-babai/erc3-ooda-agent
