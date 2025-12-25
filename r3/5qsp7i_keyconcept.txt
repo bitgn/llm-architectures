@@ -40,3 +40,13 @@ Main stats:
 - All 100 tasks took 7 hours (+2 retries due to errors in some tasks)
 - Spend 13$
 - Use multiprocessing 5-10 processes to speed completion
+
+исходный код key_concept_parallel агента
+
+version for erc3:
+here you can see all logs for 103 tasks (internal agent logic!), see readme.md for details
+https://github.com/Grigory-T/erc3-prod-key-concept-score-67
+
+general version of the agent:
+can be run and adapted for your puproses (simple to run), see readme.md for details
+https://github.com/Grigory-T/plan_repl_agent
