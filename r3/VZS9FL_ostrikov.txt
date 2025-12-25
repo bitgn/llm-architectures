@@ -1,0 +1,21 @@
+# ERC3 Agent Architecture
+
+## The Basics
+
+Fairly simple architecture: the main agent is built on Anthropic Python SDK with native Tool Use. Model - Opus 4.5. All 20+ tools are described in a single file using Anthropic's JSON Schema format. Tool execution dynamically constructs HTTP requests to the benchmark API — no code generation, just endpoint mapping.
+
+The system prompt distills all key rules from the company wiki into a compact decision algorithm: check identity → verify permissions → gather data → respond with proper outcome.
+
+## The Interesting Part: Self-Evolving Agent
+
+The real cool thing was in automated prompt evolution using a three-agent pipeline:
+
+1. Main Agent — runs the benchmark, solves all tasks, logs everything
+2. Analyzer Agent — reviews logs of failed tasks, formulates hypotheses about what went wrong and why
+3. Versioner Agent — reads all suggestions, decides what to incorporate, generates a new version of the system prompt
+
+This creates a feedback loop: run benchmark → analyze failures → patch prompt → repeat.
+
+The final production prompt was the 80th generation — automatically evolved from a basic starting point through dozens of iterations, each fixing specific failure patterns discovered by the analyzer.
+
+No manual prompt engineering. Just agents improving agents.

@@ -1,0 +1,32 @@
+# ERC3 Challenge Agent — Leaderboard Description
+
+**Multi-stage pipeline agent** built on `atomic-agents` framework with `instructor`-powered structured outputs. Uses a **6-step sequential workflow** that separates security validation, context extraction, and task execution. Based on gpt-5.1-codex-max and gpt4.1 LLM models.
+
+## Agent Design
+
+- **Security Gate Agent**: Pre-execution LLM that validates permissions against wiki rules before the main loop runs. Blocks invalid requests early (spoofing detection, access control).
+- **Prompt Context Extraction Agent**: Surfaces critical rules from 500+ line system prompts so the execution agent doesn't miss important details.
+- **Execution Agent**: ReAct-style planning loop with chain-of-thought reasoning (5 phases: Identity → Threat Detection → Info Gathering → Access Validation → Execution).
+
+## Tool Handling
+
+- **22 domain tools** covering identity, wiki, employees, customers, projects, and time tracking
+- **Auto-link generation**: Embedded `LinkGeneratorAgent` inside `RespondTool` automatically extracts entity links from response context, preventing missing-link failures
+- **Tool Provider pattern**: Centralized tool registry with typed Pydantic schemas for all inputs/outputs
+
+## Context Strategy
+
+- **Aggressive preloading**: User context, projects, full customer details, and all company users loaded *before* execution starts
+- **API enrichment**: Project data enriched with complete customer info (location, deal phase, account manager) to minimize tool calls during execution
+- **SHA1-based caching**: Wiki content and extracted rules cached by content hash — instant reload when wiki unchanged, automatic invalidation on updates
+- **7-section wiki extraction**: Business rules parsed into structured sections (Fraud Prevention, Hierarchy, Nuances, Output Requirements, Error Handling, Workflow, Entity Linking)
+- **Memory accumulation**: Critical information from security gate and context extraction injected into execution agent's initial memory
+- **Runtime Context**: Accumulated memory from previous steps, full execution history (tool calls + results)
+
+## Key Differentiators
+
+1. **Pre-execution security gate** — invalid requests blocked before planning loop
+2. **Context-rich prompts** — user projects with full team & customer data in system context
+3. **Deterministic prompt assembly** — wiki sections + user context combined without LLM
+4. **Automatic entity linking** — dedicated agent ensures correct links in every response
+5. **Precision over helpfulness** — answers exactly what was asked, no extra suggestions

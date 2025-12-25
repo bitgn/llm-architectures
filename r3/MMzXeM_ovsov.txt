@@ -1,0 +1,22 @@
+# A. Ovsov.
+
+I implemented a single-agent architecture where tools are mapped 1:1 to the API endpoints without modification.
+
+I added only one custom tool, ask_wiki, which allows the agent to ask natural language questions about the wiki. The implementation of ask_wiki is straightforward: the entire wiki content is injected into the system prompt (which proves to be highly efficient due to context caching).
+
+The agent's main system prompt is concise (**only 320 tokens**) to avoid overfitting; it contains only wiki-independent facts.
+It defines a mandatory execution sequence:
+1) Call who_am_i and get_employee...
+2) Call ask_wiki to retrieve user permissions...
+3) Validate security. If the user lacks permissions...
+4) If authorized, fulfill the User task...
+
+(plus a few more instructions).
+
+Performance:
+The deepseek-reasoner model performed the best—it offered the optimal balance of accuracy, speed, and cost.
+* Cost: ~$0.60 per 100 tasks.
+* Efficiency: Average cache hit/miss ratio ≈ 30.
+
+Conclusion:
+I considered applying the approaches from your sgr-agent-erc3-test sample, but ultimately settled on a simpler (and, in my view, more universal) architecture.

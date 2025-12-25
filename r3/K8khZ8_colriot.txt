@@ -1,0 +1,4 @@
+Claude Code SDK based agent with preflight validation, with dedicated post validation and recovery before submitting the result based on rules from wiki.
+- Improved tools schemas, I don't use SGR, but usual LLM function calling
+- For validation request I keep only rules, list of api tools called and the task.
+- For pre and post validation calls SGR is used

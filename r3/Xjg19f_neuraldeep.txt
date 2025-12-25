@@ -1,0 +1,36 @@
+# Architecture Overview: SGR Agent for ERC3-DEV Benchmark
+
+Uses open-source agent: https://github.com/vamplabAI/sgr-agent-core
+
+**Development**: 2 hours | **Deployment**: 8x H100 GPU cluster | **Result**: 0.46% accuracy
+
+## System Architecture
+
+Three-layer design built on **Schema-Guided Reasoning (SGR)** framework:
+
+### 1. SGR Agent Core - Two-Phase Loop
+- **Reasoning Phase**: Analyzes context, evaluates permissions, plans next action
+- **Action Phase**: Selects and executes tool with validated parameters
+- **Hybrid Mode**: First iteration forced reasoning, then AUTO mode (20-30% faster)
+
+### 2. ERC3-DEV Adapter
+- **26 specialized tools**: Wiki, Employees, Projects, Customers, Time Tracking
+- **Security system**: Role-based access (CEO, HR, Project Lead, Employee, Guest)
+- **History compression**: Keeps recent 4 messages + compressed summary (40% token savings)
+- **Forced completion**: Prevents infinite loops at iteration limit
+
+### 3. Parallel Execution Infrastructure
+- **Complete isolation**: Each task gets separate OpenAI client, API client, tools, conversation history
+- **Concurrency control**: `asyncio.Semaphore` limits concurrent tasks (3 default, 8 on H100 cluster)
+- **8x speedup**: 103 tasks in 31 minutes
+
+## Key Optimizations
+
+1. **Exponential backoff retry** (10 retries) - handles API errors, rate limits, validation errors
+2. **Prompt caching** - 60-80% cache hit rate, 65% cost reduction
+3. **History compression** - supports 40+ iterations without context overflow
+4. **Context compression** - every 6 step compress all tool history
+
+## Technology Stack
+
+Python 3.11+ | asyncio | Pydantic v2 | OpenAI API | ERC3 SDK | 8x H100 cluster | SGRAgentCore

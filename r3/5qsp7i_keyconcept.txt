@@ -1,0 +1,42 @@
+Agent architecture includes:
+
+Preflight check:
+1. When a permission violation is obvious - abort immediately
+
+Planning (SO):
+1. Strong model with excellent logic and strategic view - "openai/gpt-5.1"
+2. Use of SO - the plan consists of plan steps (list[PlanStep])
+3. Each step contains a step description and the required expected_output (exact names and dtypes of variables)
+4. Plan is plain (linear sequence of steps)
+
+Step completion (REPL, key agent concept):
+1. Thinking model with strong code abilities: "deepseek/deepseek-v3.2"
+2. Model sees all previous step results (short versions)
+3. Each step is completed in an isolated LLM context (to save context and reduce noise)
+4. Step follows a simple pattern (REPL):
+- llm generates Python code (thinking tokens are not included in messages history, to save context and reduce noise)
+- code is executed in a Python interpreter (use Docker to be more secure)
+- result of code is appended to the message
+5. When the model gets final step results we check exact names and dtypes of output variables of this step (see Planning) - if needed the model corrects output variables
+
+Decision after each step (SO):
+1. Strong model with good logic - "openai/gpt-4.1"
+2. When a step is completed we make a decision:
+- task is completed - abort the task and form the final answer
+- task is failed - abort the task and form the final answer
+- continue steps - continue with the next planning step
+- replan remaining steps - erase remaining plan steps and make new plan steps (only remaining, do not rewrite completed steps)
+
+Final response compilation (SO):
+1. Strong model with good logic - "openai/gpt-4.1"
+2. Model sees the execution results of all steps and forms final answer (classifications to predefined outcomes via SO)
+
+Other important parts:
+- Wiki distillation was copied from https://github.com/trustbit/erc3-agents
+- REPL Python environment is shared across all interactions in one task (steps communicate via variables in globals)
+- All model from openrouter
+
+Main stats:
+- All 100 tasks took 7 hours (+2 retries due to errors in some tasks)
+- Spend 13$
+- Use multiprocessing 5-10 processes to speed completion

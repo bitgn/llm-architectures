@@ -1,0 +1,56 @@
+# ERC3 Agent — LangChain SGR with Hybrid RAG
+
+LLM: Qwen3-235B-A22B (Gonka Network decentralized inference)
+Core: Schema-Guided Reasoning — structured JSON output (thoughts → plan → action_queue)
+
+## Architecture Highlights
+
+### 1. Action Pipeline with Enrichers
+Pipeline orchestrates every API call through stages:
+- Preprocessors: Normalize requests (e.g., fetch-merge-dispatch for partial updates)
+- Executor: API call with retry and error handling
+- PostProcessors: Side effects (identity capture, wiki sync, security redaction)
+- Enrichers: Inject context-aware hints into agent's context
+
+### 2. Enricher System — Intelligent Hints
+20+ enrichers analyze API responses and inject guidance WITHOUT blocking:
+- RoleEnricher: After projects_get → "You are LEAD of this project, proceed with update"
+- ProjectOverlapAnalyzer: Finds shared projects → "DEFINITIVE MATCH: proj_X is the ONLY
+project where you can authorize"
+- PaginationHintEnricher: "next_offset=5 means MORE results! MUST paginate"
+- SkillSearchStrategyHint: "Use min_level=9 to find top experts first"
+- EfficiencyHint: "You called employees_get 6 times — BATCH them!"
+
+Key feature: Cross-turn persistence — definitive matches stored in shared state survive
+pagination.
+
+### 3. Three-Mode Guard System
+Guards validate agent responses before submission:
+- Hard block: API-verified impossible (employee not in project team)
+- Soft block: Risky action — block first, allow on repeat with same warning_key
+- Soft hint: Guidance appended without blocking
+
+Examples: OutcomeValidationGuard catches denied_security without permission check;
+SubjectiveQueryGuard blocks ok_answer on "that cool project" queries.
+
+### 4. Hybrid RAG Wiki System
+Local wiki cache with three-stream search:
+- Regex: Pattern matching for structured queries ("salary|privacy")
+- Semantic: sentence-transformers embeddings with cosine similarity
+- Keyword: Token overlap fallback
+
+SHA1-based versioning — each wiki version cached separately with pre-computed embeddings.
+Dynamic injection: when wiki hash changes mid-task, critical policies auto-injected.
+
+### 5. Fuzzy Normalization Layer
+Handles human↔API naming mismatches in tool parsers:
+- "Italian language" → skill_italian
+- "Willingness to travel" → will_travel
+- Progressive truncation: skill_rail_industry_knowledge → skill_rail
+
+### 6. Parallel Execution
+Thread-safe design for concurrent task execution:
+- Thread-local WikiManager instances
+- Global embedding model singleton with lock
+- Explicit task_id passing to stats (avoids race conditions)
+- Action batching: 10-30 API calls in ONE turn via action_queue

@@ -1,0 +1,14 @@
+IT Development Team d.o.o., Slovenia.
+
+
+There were two models:
+- Langchain Tool Agent Qwen/Qwen3-4B-Thinking-2507
+- Langchain Tool Agent openai/gpt-4.1
+
+The solution is built around a ReAct-style agent implemented with LangChain. The base model is Qwen3-4B with reasoning capabilities. In addition, a lightweight safety layer (SO) is integrated, following the same general pattern as in the provided example.
+
+The tool's layer was adapted specifically for LangChain. The tool schemas were simplified by removing unused fields, while input and output parameter descriptions were expanded and clarified. Tool descriptions were also refined to improve the model’s accuracy in tool selection. Token usage was optimized using toon, and several custom tools were added, including a tool for retrieving the user’s current projects.
+
+For context handling, a rule distillation approach was applied. The original Wiki and instruction set were passed through the model to parse, compress, and restructure the rules into a compact system context. The conversation history itself was not compressed, as experiments showed that history compression degrades quality significantly, while Qwen3 handled long contexts reliably without noticeable performance loss.
+
+One notable observation is that, compared to GPT-5, the smaller reasoning-focused Qwen3 model did not exhibit tool-calling loops and showed more stable completion of reasoning chains.

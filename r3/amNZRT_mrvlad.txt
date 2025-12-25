@@ -1,0 +1,14 @@
+Instead of betting on a complex agent framework, I focused on context engineering:
+- Execution / iteration layer: I used OpenAI’s Codex CLI as the working agent environment: terminal-first workflow where I could iterate quickly and keep everything under version control.
+- Knowledge / grounding layer: I invested most of my effort into a structured context repository I call a memory_bank.
+
+The memory_bank concept (Zettelkasten-style)
+
+My memory_bank is effectively a Zettelkasten for tools and APIs: small, modular notes that can be combined into a task-specific context bundle. Each note is written to answer one of these questions:
+ 1. What is the tool/API for?
+ 2. What are the inputs/outputs and constraints?
+ 3. Common failure modes and how to recover
+ 4. Canonical examples (minimal, copy-pastable)
+ 5. “Do/Don’t” rules to prevent prompt drift
+
+The goal is to make the model behave like it has procedural memory: not just “facts”, but repeatable operating procedures (how to call tools correctly, how to interpret responses, what to do when something fails).

@@ -1,0 +1,3 @@
+The core of the agent is built on the OpenAI runtime using the GPT-4.1 model. Tool usage is implemented via Function Calling with structured outputs. A significant part of the work was focused on designing convenient and reliable agent tools, especially for search. For this purpose, text-embedding-3-large embeddings were used.
+
+Regarding context handling, the main principle was to keep the agent’s own instructions minimal and rely on distilled wiki-based knowledge, with special care taken to preserve the original rules and constraints without distortion.

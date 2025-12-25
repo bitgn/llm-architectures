@@ -1,0 +1,64 @@
+------------------------------------------------------
+This agent is an experiment in AI-assisted coding, it was coded automatically by a coding agent.
+
+Below is the summary of the architecture, produced by the same agent. Note how it overestimates its own accuracy.
+------------------------------------------------------
+
+AGES Agent Architecture (ERC3 Competition)
+
+AGES Agent is an AI agent designed for a corporate project management, employee, and time management system. It is built on GPT-4o and employs structured output via Pydantic schemas.
+
+Main Operational Cycle:
+The agent implements an iterative ReAct cycle: Thought → Plan → Action (tool) → Result → Next Step.
+The LLM returns strictly typed JSON adhering to a Pydantic schema (AgentStep → ToolCall), ensuring deterministic action routing and resilience against parsing errors. Validation occurs at the client.beta.chat.completions.parse() level, providing guaranteed parsing without regular expressions.
+The schema specifies the agent's current reasoning, chosen tool, and fully typed parameters, with a maximum of 25 steps per task.
+
+Core Components:
+
+Parallel Executor (main_parallel.py):
+
+* Executes up to 8 tasks simultaneously using ThreadPoolExecutor.
+* Accelerates session processing by 5-8 times compared to sequential execution.
+
+Agent Core (ages_agent_v2.py):
+
+* Contains logic for the cycle, LLM invocation, tool execution, and guardrails.
+* Supports standard models (GPT-4o) and Codex models via Responses API.
+
+Tools:
+
+* Wrappers around ERC3 API:
+
+  * whoami, list/search/get for employees, projects, clients, and wiki.
+  * log_time, update_project_status, update_employee for mutations.
+  * respond for finalizing and classifying outcomes.
+
+Prompt System (~500 lines):
+
+* Detailed safety rules.
+* Search strategies for ambiguity resolution (CV-projects, cost center codes post-M&A).
+* Entity linking guidelines in responses.
+
+Guardrails (Protective Mechanisms):
+
+* Mandatory whoami execution before each task to establish user context.
+* Guest access blocking (is_public=true) prevents access to sensitive data.
+* Permissions verification ensures only Leads can change project statuses, only CEO can view salaries.
+* Automatic linking of current user and mentioned employees in responses.
+
+Error Handling and Resilience:
+
+* Fallback strategy: On search_* errors, automatically fallback to list_* with pagination.
+* Pagination limits: limit=5 for all requests to prevent API errors.
+* Invalid response handling: Graceful degradation when response fields are None.
+* Telemetry: Reports used tokens and completion texts to ERC3 API.
+
+Task Completion:
+Finalized via respond(message, outcome, links), providing a final response and classification:
+
+* ok_answer: Task successfully completed.
+* denied_security: Rejected for security reasons.
+* none_clarification_needed: Further clarification required.
+* error_internal: Internal system error.
+
+Best result achieved: 70/100 tasks (70% accuracy) on ERC3-PROD.

@@ -1,0 +1,31 @@
+LLM: gpt-oss-120b
+Used exclusively via the Cerebras provider for speed (up to ~3k tokens/s).
+
+The architecture was based on a modified SGR NextStep with a tricky context-management logic: it fed the whole plan field from the last turn, not just the first step of the plan. All turns except the immediately previous one were kept in the LLM context in a compressed form.
+
+Each turn of the main NextStep flow was checked by a StepValidator. If everything was OK, the tool was executed and the flow continued as usual (the validator's work was not reflected in the context at all). Otherwise, the last NextStep message was sent for rework with the validator's comments.
+
+System instructions were extracted from wiki files by an LLM during the ingestion phase.
+
+The system prompt was loaded dynamically depending on whoami (public vs authenticated).
+The system prompt contained minimal information about /respond formatting. Detailed instructions for /respond were loaded by calling a pseudo-tool.
+
+The /whoami call was triggered automatically at the start of a task.
+
+A dynamic user context enrichment feature was used. Before the main agent started, the system code automatically pulled the user's full profile, projects, clients, and time entries by user ID. A separate LLM pass then filtered this data, and only the task-relevant subset was fed into the main LLM flow.
+
+Tool wrappers:
+- Pagination was effectively removed from all tools. A separate auto-pagination function would paginate through all pages and return the full list.
+- Req_LogTimeEntry was rebuilt because it was the only tool in the SDK that was constructed with a different field order, where the tool field was not first, which confused the model.
+- Also, as mentioned above, an extra Req_LoadRespondInstructions pseudo-tool was added to load the detalied /respond instructions.
+All tools were invoked via Structured Output instead of native tool calling.
+
+Issues: I set the turn limit for the main NextStep flow too low, so 5 of 103 tasks were simply not completed. There was not enough time left before the competition ended to rerun with a higher limit.
+
+Running all 103 tasks took about 1,430 LLM requests, $6.8, 15 minutes (with parallel task execution), 17.7M input-context tokens, and 838K output-context tokens. The main contributor to output tokens was reasoning.
+
+LLM: gpt-oss-120b via Cerebras
+Core agent: modified SGR NextStep with Steps validation and custom context strategy
+System prompts: routed based on /whoami
+User context: enriched by auto-loading from API with subsequent LLM filtering
+Tools: auto-pagination wrapper
