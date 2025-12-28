@@ -2,7 +2,7 @@ LLM: gpt-4.1-mini through Azure
 Wiki to rules through Openrouter gpt-5.1-codex-max (i recomend to use 5.1 instead)
 
 
-note: Implemented within 5 hours. Not all features which i implemented in my Store agent were merged to the erc3 Prod agent (due to a bad timing), see not merged but promising features on the bottom.
+note: Implemented within 5 hours. Not all features which i implemented in my Store agent were merged to the erc3 Prod agent (due to a bad timing), see not merged but promising features on the bottom. 
 
 Architecture  "SGR-guidance":
 1. Modified SGR NextStep architecture. included extra fields (see bellow) to bring rules and roles to LLM's focus of attention
@@ -11,6 +11,11 @@ Architecture  "SGR-guidance":
 4. Completion audit by  LLM validator. when agent wants to finish whole task, a separate LLM checks results and approve or suggests to continue with different approach
 5. Preloading of all current user profile data into starting prompt.
 6. Auto-pagination wrappers for all operations with paging (including search)
+
+Issues:
+- problem on existing tool had to reimplement it as AddTimeLogEntryForUser
+- Openrouter was giving errors on json deserialization, switching to azure helped.
+
 
 Supporting infrastructure: 
 1. Per session Structured logging of each operation. <session> is folder, <task>_<score>.json for tasks
@@ -70,5 +75,6 @@ Experimenting with prolog rules generation, looks very promising.
 Source code will be posted to https://t.me/Gpt4Agents
 My blog "AI driven apps for business" https://aidrivenapps.blogspot.com
 Over winter holiday there will be posed a lot of useful content.
+
 
 
