@@ -1,0 +1,80 @@
+LLM: gpt-4.1-mini through Azure 
+Distillation of Wiki to rules through Openrouter gpt-5.1-codex-max (but i recomend to use 5.1 instead)
+
+note: Implemented within 5 hours. Not all features which i implemented in my Store agent were merged to the erc3 Prod agent (due to a bad timing), see not merged but promising features on the bottom. 
+
+Architecture  "SGR-guidance":
+1. Modified SGR NextStep architecture. included extra fields (see bellow) to bring rules and roles to LLM's focus of attention
+2. SGR guidance on all levels: distill, preflight, nextstep.
+3. Context compaction logic (was disabled during prod run, due to lack of testing)
+4. Completion audit by  LLM validator. when agent wants to finish whole task, a separate LLM checks results and approve or suggests to continue with different approach
+5. Preloading of all current user profile data into starting prompt.
+6. Auto-pagination wrappers for all operations with paging (including search)
+
+Issues:
+- problem on existing tool had to reimplement it as AddTimeLogEntryForUser
+- Openrouter was giving errors on json deserialization, switching to azure helped.
+
+
+Supporting infrastructure: 
+1. Per session Structured logging of each operation. <session> is folder, <task>_<score>.json for tasks
+2. Managing of tasks execution order using dictionary of tasks and their complexity scores.
+3. Support to continue any incomple session through cli
+4. parralel processing.
+
+SGR guidance:
+
+1. SGR WIKI RULES DISTIL. Explicit list of allowed and forbiden operations per role:
+
+class DistillWikiRules(BaseModel
+	...
+	role_operations: List[RoleOperation]
+
+class RoleOperation(BaseModel):
+    role: Literal["guest", "regular emploee", "lead", "executive"]
+    allowed_operations: List[str]
+    dissallowed_operations: List[str]
+
+2. SGR preflight, extracts summary what is needed for solving task and all roles.
+
+class TaskProfile(BaseModel):
+    goal_description: str
+	rules_violated: List[str]
+    rules_followed: List[str] 
+    actor_role: Literal["guest", "regular emploee", "lead", "executive"]
+	target_employee_role: Optional[Literal["lead", "regular emploee", "executive"]]
+    target_entity: Literal["employee", "customer", "project", "time_entry", "wiki_page", "system_dependency", "other"]
+    required_items: List[str]
+    applicable_recomendations_from_rules: List[str] 
+
+3. SGR NextStep, bring everything to the focus of attention of LLM:
+
+RuleResult(BaseModel):
+    rule: str
+    result: Literal["followed", "violated", "not_applicable"]
+	
+class NextStep(BaseModel):
+	...
+	current_actor_role:  Literal["guest", "regular emploee", "lead", "executive"] 
+	all_rules_results: Annotated[List[RuleResult], MinLen(15), MaxLen(15)] 
+    confirm_requested_operation_is_allowed_by_the_role: bool 
+	enough_data: bool
+
+    
+Features implemented in my Store Agent, but had no time to merge to the Prod agent:     
+1. Smart tools, passing extra function argument for a task/goal. before returning results of API llm filterig data against  passed task. 
+2. Python code execution tool with restricted environment allowing explicit list of preinstalled libs.
+3. openskills based skill call tool
+4. Toon format. saves tokens.
+5. Context compaction logic. extra field for summarized context in NextStep model
+
+Experimenting with prolog rules generation, looks very promising.
+
+My TG: @figaroserg1
+Source code will be posted to https://t.me/Gpt4Agents
+My blog "AI driven apps for business" https://aidrivenapps.blogspot.com
+Over winter holiday there will be posed a lot of useful content.
+
+
+
+
